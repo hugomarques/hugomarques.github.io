@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Sistemas distribuídos são estranhos
+title: [Fundamentos] Sistemas distribuídos são estranhos
 published: true
 description: O que são sistemas distribuídos e por que eles são complexos?
 tags: #iniciante #sistemasdistribuidos #microserviços

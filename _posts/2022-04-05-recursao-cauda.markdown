@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Recursão de cauda para iniciantes
+title: [Algoritmos] Recursão de cauda para iniciantes
 published: true
 description: Vamos entender o problema de perfomance com algoritmos recursivos e como recursão de cauda resolve o problema.
 tags: algoritmo, recursao, estruturadedados, iniciante

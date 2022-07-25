@@ -1,6 +1,6 @@
 ---
 layout: post
-title: O problema da "escrita-dupla"
+title: [Fundamentos] O problema da "escrita-dupla"
 published: true
 description: O problema da escrita-dupla em um sistema real
 tags: sistemasdistribuidos, iniciante, microserviços, java
