@@ -3,6 +3,7 @@ layout: post
 title: Retries e lidando com erros transientes 101
 published: true
 description: Lidando com erros transientes através de retries.
+tags: sistemasdistribuidos, retries, microserviços
 ---
 
 Se você leu o primeiro post dessa série sobre sistemas distribuídos você aprendeu que [Sistemas distribuídos são estranhos](https://dev.to/hugaomarques/sistemas-distribuidos-sao-estranhos-5bkp). A partir do momento que separamos os sistemas em computadores diferentes através da rede, um mundo
@@ -27,6 +28,8 @@ Os exemplos são infindáveis. Em resumo, sempre haverá a chance que a sua prim
 > Disclaimer: O código abaixo não passa na qualidade pra ir pra produção 😬.
 
 Ok, muita lorota mas que tal simularmos o nosso problema? O código completo pode ser encontrado no [github](https://github.com/hugomarques/code_examples/tree/main/retries).
+
+![shut up and show me the code](https://raw.githubusercontent.com/hugomarques/hugomarques.github.io/main/_assets/shut-up-and-show-me-the-code.jpg)
 
 O método abaixo roda em uma pequena App com Spring Boot. Em resumo, o método falha todo minuto entre 00 e 05 segundos.
 
