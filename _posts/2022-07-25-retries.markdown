@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Retries e lidando com erros transientes 101
-published: true
+published: false
 description: Lidando com erros transientes através de retries.
 tags: sistemasdistribuidos, retries, microserviços
 ---
@@ -222,7 +222,7 @@ Voltando ao nosso problema da *black friday* imagine a segunda situação.
 2. Mesmo assim, a carga é tão alta que o nosso servidor não segue aguentar as requisições que continuam chegando em 2.1, 2.2 ou 2.3s depois.
 3. Com a adição dos retries ao tráfego normal, toda vez que o servidor tá pra se recuperar ele cai novamente.
 
-A pergunta que fica é, se a carga está tão alta e um retry sempre vai falhar. Por que deveríamos continuar enviando retries?
+A pergunta que fica é, se a carga está tão alta e um retry sempre vai falhar, por que deveríamos continuar enviando retries?
 
 ## Retries com algoritmo de *token bucket*
 
