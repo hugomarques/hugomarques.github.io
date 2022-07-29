@@ -1,0 +1,260 @@
+---
+layout: post
+title: Retries e lidando com erros transientes 101
+published: true
+description: Lidando com erros transientes através de retries.
+---
+
+Se você leu o primeiro post dessa série sobre sistemas distribuídos você aprendeu que [Sistemas distribuídos são estranhos](2022-04-26-sistemas-distribuidos-estranhos.markdown). A partir do momento que separamos os sistemas em computadores diferentes através da rede, um mundo
+novo de possibilidades e problemas se tornam acessíveis a nós. Entre eles, nossos sistemas agora são suscetíveis a erros transientes.
+
+Nesse post, nós vamos discutir essas falhas temporárias, como podemos tentar resolver esse problema e quais novos problemas são gerados como parte de nossa solução.
+
+## Problema: Erros transientes
+
+Erros transientes são uma categoria de problemas que vão ocorrer a partir do momento que estámos lidando com sistemas distribuídos. Recapitulando o post anterior, as falácias dos sistemas distribuídos ajudam a explicar esses problemas, entre elas:
+1. A rede é confiável: A rede vai falhar. Ela pode falhar por apenas 1 segundo. Mas isso pode ser suficiente para impedir aquela requisição que seu sistema tentou fazer com sucesso.
+2. A topologia não muda:
+  * Em tempos de cloud, máquinas são adicionadas e removidas da rede o tempo inteiro. Imagine o que acontece se o sistema A depende do sistema B e, no momento que a requisição A -> B é feita, o sistema B está executando um deploy e a máquina responsável por atender a requisição é removida da rede.
+  * Com aparelhos mobile, usuários estão desconectando e reconectando em redes diferentes o tempo inteiro. O que acontece quando o usuário está executando uma requisição nos segundos de desconexão da rede?
+
+Os exemplos são infidáveis. Em resumo, sempre haverá a chance que a sua primeira tentativa de executar uma requisição vai falhar.
+
+### Exemplo
+
+> Disclaimer: O código abaixo não passa na qualidade pra ir pra produção 😬.
+
+Ok, muita lorota mas que tal simularmos o nosso problema? O código completo pode ser encontrado no [github](https://github.com/hugomarques/code_examples/tree/main/retries).
+
+O método abaixo roda em uma pequena App com Spring Boot. Em resumo, o método falha todo minute entre 00 e 05 segundos.
+
+```java
+@RequestMapping("/")
+public ResponseEntity<String> home() throws InterruptedException {
+  final var now = LocalDateTime.now();
+  logger.info("Failure flag value: " + now);
+  // Sempre envie um erro durante os primeiros 5s de cada minuto.
+  if (now.getSecond() >= 0 && now.getSecond() <= 5)
+    throw new IllegalStateException();
+  return ResponseEntity.status(200).body("Current time: " + now);
+}
+```
+
+
+Eu escrevi um cliente que invoca essa app continuamente, porém, se o cliente percebe 1 erro, o cliente interrompe a execução.
+
+```java
+public static void main(String[] args) throws URISyntaxException, InterruptedException {
+
+  final HttpRequest request = HttpRequest.newBuilder()
+      .uri(new URI("http://localhost:8080"))
+      .GET()
+      .build();
+
+  while (NUM_ERRORS < 1) {
+    try {
+      var response = callService(request)
+      NUM_ERRORS = 0;
+      System.out.println("--------------------------------------------");
+      System.out.println(Thread.currentThread().getName());
+      System.out.println(response.statusCode());
+      System.out.println(response.body());
+      System.out.println("--------------------------------------------");
+    } catch (RuntimeException ex) {
+      System.out.println(ex.getMessage());
+      NUM_ERRORS++;
+    }
+    Thread.sleep(500);
+  }
+}
+
+private static HttpResponse<String> callService(HttpRequest request) {
+  try {
+    System.out.println("Executing request at" + LocalDateTime.now());
+    final HttpResponse<String> response =
+        HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
+    if (response.statusCode() == 500)
+      throw new RuntimeException("Failed to call API");
+    return response;
+  } catch (IOException e) {
+    System.out.println("Operation failed, exception IO");
+    throw new RuntimeException(e);
+  } catch (InterruptedException e) {
+    System.out.println("Operation failed, exception Interrupted");
+    throw new RuntimeException(e);
+  }
+}
+```
+
+Exemplo de execução:
+
+```log
+main
+200
+Current time: 2022-07-26T18:19:59.238087
+--------------------------------------------
+Executing request at2022-07-26T18:19:59.743644
+--------------------------------------------
+main
+200
+Current time: 2022-07-26T18:19:59.744904
+--------------------------------------------
+Executing request at2022-07-26T18:20:00.250584
+Failed to call API
+```
+
+E aí? Como a gente pode evitar que nossa aplicação pare com apenas 1 erro?
+
+## Retries
+
+A forma mais simples de contornamos um erro transiente é tentar a mesma requição de novo. Existem diversas bibliotecas que ajudam com isso como
+`sprint-boot-retry` e o `resilience4j`. No nosso exemplo aqui, eu implementei com `resilience4j`.
+
+O código principal segue abaixo:
+
+```java
+ public static void main(String[] args) throws URISyntaxException, InterruptedException {
+
+    final HttpRequest request = HttpRequest.newBuilder()
+        .uri(new URI("http://localhost:8080"))
+        .GET()
+        .build();
+
+    Function<HttpRequest, HttpResponse> service = (HttpRequest x) -> callService(x);
+
+    var config = RetryConfig.custom().retryExceptions(Exception.class).maxAttempts(3).waitDuration(
+        Duration.ofSeconds(3)).build();
+    var registry = RetryRegistry.of(config);
+    var retry = registry.retry("retry");
+
+    final var retryableServiceCall = Retry.decorateFunction(retry, service);
+
+
+    while (NUM_ERRORS < 1) {
+      try {
+        var response = retryableServiceCall.apply(request);
+        NUM_ERRORS = 0;
+        System.out.println("--------------------------------------------");
+        System.out.println(Thread.currentThread().getName());
+        System.out.println(response.statusCode());
+        System.out.println(response.body());
+        System.out.println("--------------------------------------------");
+      } catch (RuntimeException ex) {
+        System.out.println(ex.getMessage());
+        NUM_ERRORS++;
+      }
+      Thread.sleep(500);
+    }
+  }
+```
+
+Um possível resultado de executar o código acima seria:
+
+```
+main
+200
+Current time: 2022-07-27T17:05:59.227065
+--------------------------------------------
+Executing request at2022-07-27T17:05:59.731737
+--------------------------------------------
+main
+200
+Current time: 2022-07-27T17:05:59.733363
+--------------------------------------------
+Executing request at2022-07-27T17:06:00.238117
+Executing request at2022-07-27T17:06:03.303864
+Executing request at2022-07-27T17:06:06.316072
+--------------------------------------------
+main
+200
+Current time: 2022-07-27T17:06:06.318999
+```
+
+Observe como a execução roda a cada 500ms mas às `2022-07-27T17:06:00.238117` nós recebemos 1 falha. Logo em seguida, vemos que nosso client tenta novamente `2022-07-27T17:06:03.303864`, mais 1 falha pois ainda estamos dentro do intervalo de falha (00-05s). Finalmente a nossa 3ª tentativa é executada
+com sucesso `2022-07-27T17:06:06.316072` e a nossa execução continua como se não houvesse nenhuma falha. Afinal, a chamada foi feita com sucesso com o uso de retries.
+
+Bacana né? Mas como tudo em engenharia de software, a solução acima tem alguns problemas.
+
+## Problemas com retries
+
+Imagine a seguinte situação.
+
+1. É o início de uma black friday e todo mundo decide acessar o seu serviço ao mesmo tempo.
+2. Ao tentar processar esse fluxo de requisições ao mesmo tempo o nosso pobre servidor não aguenta e manda um erro temporário.
+3. Recebendo o erro temporário, todos os clientes decidem tentar a requisição novamente.
+4. As requisições com retry chegam todas de uma vez.
+5. O nosso servidor continua sobrecarregado e continua falhando as requisições.
+6. O usuário fica infeliz porque perdeu aquela promoção bacana...
+
+Será que dá pra fazer melhor?
+
+## Retries com backoff and jitter
+
+[Nesse post de Março de 2015](https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/) Marc Brooker, Senior Principal Engineer no AWS,  introduz a idéia de solucionar esse problema utilizando um algoritmo de retry com backoff e jitter. Como funciona essa idéia?
+
+1. Ao invés de executar a requisição de retry imediatamente após a falha o cliente espera um pouco
+2. Esse tempo de espera é determinado seguindo uma fórmula que leva em conta um pouco de aleatoriedade( essa é parte chamada jitter) e uma parte exponencial relacionada ao número de falhas (essa é a parte de backoff).
+
+### Por quê "backoff"?
+
+A idéia do backoff é não tentar a requisição imediatamente. Ao invés disso, para casa falha, nós dobramos o tempo de espera. Por exemplo, na primeira falha esperamos 2s pra tentar de novo, na segunda falha nós esperamos 4s, na terceira falha 8s e assim successivamente. Essa estratégia faz com que os retries não continuem colocando pressão em um servidor já sobrecarregado.
+
+### Por quê Jitter?
+
+Porém o backoff não resolve o problema completamente, imagine que todos os clientess falham ao mesmo tempo. Isso significa que em 2s o nosso servidor vai levar uma sobrecarga de requisições e em 4s de novo...
+O Jitter adiciona um pouco de aleatoriedade pra melhorar essa estratégia. Enquanto alguns clientes podem retentar em 2s, outros vão fazê-los em 2.1s ou 2.2s. Essa pequena variância ajudar a espalhar o número de requisições ao longo do tempo diminuindo a carga sobre a nossa aplicação.
+
+## Mais problemas com retries
+
+Voltando ao nosso problema da black friday imagine a segunda situação.
+
+1. Nós adicionamos o algoritmo de backoff e jitter ao nossos retries.
+2. Mesmo assim, a carga é tão alta que o nosso servidor não segue aguentar as requisições que continuam chegando em 2.1, 2.2 ou 2.3s depois.
+3. Com a adição dos retris ao tráfego normal, toda vez que o servidor tá pra se recuperar ele cai novamente.
+
+A pergunta que fica é, se a carga está tão alta e um retry sempre vai falhar. Por que deveríamos continuar enviando retries?
+
+## Retries com algoritmo de "token bucket"
+
+Pra solucionar o problema acima nós vamos utilizar um novo algoritmo de retries que é a estratégia de utilizar um  algoritmo de token bucket. Como funciona essa idéia?
+
+1. Para cada request feita com sucesso nós adicionamos uma percentagem de bucket em uma variável. Por exemplo: 0.1 token para cada sucesso.
+2. Para cada falha nós removes 1 token da variável.
+3. Nós só podemos realizar chamadas enquanto o token for acima de 0.
+
+Por exemplo:
+
+1. Suponha que nosso token bucket começa com um valor de 3.
+2. Quando a primeira request falhar, nós subtraímos 1 do bucket. Agora o bucket tem o valor de 2.
+3. Como o bucket tem o valor acima de 0, nós executamos uma nova request.
+4. Recebemos uma nova falha e o bucket cai para 1.
+5. Tentamos novamente, acontece uma nova falha o bucket cai pra 0.
+6. Os retries param totalmente.
+7. Novas requisições podem ser feitas mas note que os retries não vai ser feitos já que o bucket atingiu 0.
+8. Quando as requisições começarem a ter sucesso, elas começam a adicionar 0.1 bucket para cada sucesso.
+9. Depois de 10 requisiçÕes com sucesso nós temos um bucket de valor 1 e agora caso haja uma falha nós teremos direito a 1 retry.
+
+
+Esse algoritmo é ótimo para impedir o problema de retry storm que ocorre quando um serviço A chama um serviço B que chama um serviço C. Um erro em cascata pode dar trigger em um retry de A que pode tentar até 3x, B pode tentar também 3x o que faz com que C possa receber até 9x o tráfego 😱 .
+
+Esse algoritmo pode ser utilizado ao lidar com a AWS SDK utilizando a estratégia de [TokenBucketRetryCondition](https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/core/retry/conditions/TokenBucketRetryCondition.html).
+
+
+## Ainda mais problemas com retries
+
+Infelizmente, mesmo o token bucket não soluciona todos os nossos problemas. Por exemplo:
+1. O que acontece quando executamos o retry mas o servidor ainda está processando a 1ª requisição?
+2. Se falharmos 2x, vale à pena continuar consumindo recursos e tentar uma 3ª vez?
+3. Toda vez que fazemos retry, ainda estámos segurando a resposta ao usuário, o que faz com que a latência da requisição aumente e logo introduz mais erros de timeout.
+4. Devemos fazer retry no nível mais baixo, por exemplo em uma chamada de API, ou no nível mais alto apenas para evitar **retry storms**?
+
+Esse artigo não vai responde todas essas perguntas mas algumas delas podemos explorar em novos artigos no futuro.
+
+## Conclusão
+
+
+## Referências
+1. [Fixing retries with token buckets and circuit breakers](https://brooker.co.za/blog/2022/02/28/retries.html)
+2. [Timeouts, retries, and backoff with jitter](https://aws.amazon.com/builders-library/timeouts-retries-and-backoff-with-jitter/?did=ba_card&trk=ba_card)
+3. [Exponencial Backoff and Jitter](https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/)
+4. [Summary of retry strategies](https://www.tomwalton.blog/posts/summary-of-retry-strategies/)
