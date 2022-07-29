@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Retries e lidando com erros transientes 101
-published: false
+published: true
 description: Lidando com erros transientes através de retries.
 tags: sistemasdistribuidos, retries, microserviços
 ---
