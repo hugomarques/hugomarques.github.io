@@ -9,16 +9,16 @@ tags: arquiteturalimpa, sistemasdistribuidos, aws, systemdesign
 
 > Disclaimer: Os exemplos usados aqui embora baseados em projetos reais são de minha autoria. Eu simplifico/altero alguns detalhes de forma a simplificar o post e preservar a IP das empresas. Esse post é 100% baseado apenas em minhas opiniões e não reflete meus empregadores.
 
-A ideia desse post surgiu de uma discussão que eu tive com o @rponte. Com todos os debates recentes sobre "Arquitetura Limpa" e "Ports and Adapters" nós conversávamos como nos últimos 7 anos os projetos que eu passei foram estruturados em empresas como Amazon e Twitter.
+A ideia desse post surgiu de uma discussão que eu tive com o @rponte. Com todos os debates recentes sobre "Arquitetura Limpa" e *"Ports and Adapters"* nós conversávamos como nos últimos 7 anos os projetos que eu passei foram estruturados em empresas como Amazon e Twitter.
 
 ## A Arquitetura simples
 
 Eu pensei nesse termo "Arquitetura Simples" como uma brincadeira com o termo arquitetura limpa. Esse estilo de arquitetura não é proposital, ele nasce naturalmente a partir do momento que o time de desenvolvimento abraça os dois seguintes princípios:
-1. **YAGNI** - You aren't gonna need it (Você não vai precisar disso).
-2. **KISS** - Keep it Simple Stupid ou Keep it Super Simple (Mantenha simples estúpido ou mantenha super simples).
+1. **YAGNI** - *You aren't gonna need it* (Você não vai precisar disso).
+2. **KISS** - *Keep it Simple Stupid* ou *Keep it Super Simple* (Mantenha simples estúpido ou mantenha super simples).
 A ideia "central" é que o time não vai gastar energia e esforço projetando sistemas tentando prever o futuro ou desacoplando camadas sem que os requisitos exijam isso.
 
-Eu seria hipócrita em dizer que isso é/foi uma escolha consciente. Nos últimos 8 anos que trabalhei em empresas como Amazon e Twitter nós nunca nos sentamos e decidimos explicitamente "essa será a arquitetura do nosso sistema". Os sistemas simplesmente eram escritas e vinham "à tona" nessa forma simples. Talvez pela facilidade e naturalidade de como é começar um projeto dessa forma.
+Eu seria hipócrita em dizer que isso é/foi uma escolha consciente. Nos últimos 8 anos que trabalhei em empresas como Amazon e Twitter nós nunca nos sentamos e decidimos explicitamente "essa será a arquitetura do nosso sistema". Os sistemas simplesmente eram escritos e vinham "à tona" nessa forma simples. Talvez pela facilidade e naturalidade de como é começar um projeto dessa forma.
 
 Também é importante mencionar que a forma como esses sistemas são escritos não é a forma perfeita para todas as aplicações e tão pouco eu acho que essa seja a solução para todos os problemas. "There's no silver bullet" (Não há bala de prata) é um outro princípio que eu acredito e que eu acho que deve ser sempre ponderado por todos os times nos mais diversos projetos. 
 
@@ -29,13 +29,13 @@ Os componentes podem ser observados no diagrama abaixo:
 
 ![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/9niyeifnupmk59y4nop4.png)
 
-### Controlers
+### Controllers
 
-Um controller por API, aqui a gente recebe um *RequestDTO* que representa a requisição de uma API RPC, fazemos todas as validações de input e outras coisas como logging. 
+Um controller por API (*Application Programming Interface*), aqui a gente recebe um *RequestDTO* que representa a requisição de uma API RPC (*Remote Procedure Call*), fazemos todas as validações de input e outras coisas como logging. 
 Depois existem diversas opções aqui que variam de projeto pra projeto:
 1. Passamos o *RequestDTO* diretamente para o objeto de caso de uso. Essa opção favorece simplicidade (KISS e YAGNI), porém acopla teu objeto de caso de uso com modificações no modelo da API. Muitas vezes, isso está totalmente ok.
 2. Esse *RequestDTO* é traduzido pra uma entidade de negócio do caso de uso se as entidades forem extremamente anêmicas. Essa opção favorece simplicidade porém em muitos casos a entidade vai ser criada incompleta e vai ser um objeto mutável que é preenchido com mais informações na camada de negócio. 
-2. Traduzimos o *RequestDTO* para algum outro DTO que é usado exclusivamente como input da API de caso de uso. Esse é o modelo mais flexível que desacopla negócios da API porém é mais verboso e exige transferir os dados de um DTO pra outro. A flexibilidade ajuda se o caso de uso utilizar inputs diferentes, por exemplo, uma API síncrona e um worker assíncrono.
+2. Traduzimos o *RequestDTO* para algum outro DTO (*data-transfer object*) que é usado exclusivamente como input da API de caso de uso. Esse é o modelo mais flexível que desacopla negócios da API porém é mais verboso e exige transferir os dados de um DTO pra outro. A flexibilidade ajuda se o caso de uso utilizar inputs diferentes, por exemplo, uma API síncrona e um worker assíncrono.
 
 **Por que?** É comum o controller fazer várias regras referentes a obtenção de dados, logging e outras validações. Misturar isso com a coordenação entre diversos outros objetos como invocar serviços externos e salvar no banco de dados deixa o controller grande demais. No geral, nós quebramos o controller pra:
 * Reduzir o tamanho e complexidade da classe.
@@ -50,7 +50,7 @@ As classes dessa camada normalmente caem em 2 grupos:
 
 **Por que?** Uma coisa que eu aprendi ao longo dos anos é ter muito cuidado em reusar essas classes de caso de uso para múltiplas APIs. No início essa ideia parece funcionar mas com o tempo as regras de negócio vão mudando e as classes de caso de uso vão ficando cheias de regras especiais para diferentes APIs. Um bom exemplo é quando chamamos essas classes de "Manager", por exemplo, ProductManager e aí você implementa create/update/delete/read na mesma classe só pra reusar algumas funções em comum. Agora imagine que o caso de uso de update tem 3 dependências, o de delete tem 2 e o create tem outras 3. Mesmo que haja sinergia entre elas, as vezes as dependências vão ser diferentes e no pior dos casos a sua classe pode acabar com 8 dependências diferentes. Nesse caso, talvez seja melhor quebrar em classes de caso de uso diferentes e abstrair os comportamentos comuns que são independentes de caso de uso nas entidades de domínio.
 
-Ainda nessa camada a maior polêmica é, devo anotar nossas entidades com anotações de persistência ORM? Na maioria dos projetos que eu entrei entidades de persistência e entidades de domínio são mantidas separadamente e sempre temos que converter de uma pra outra. Porém, olhando pra trás eu me pergunto se essa separação é realmente necessária. Novamente, nessa mesma maioria dos projetos, sempre houve um mapeamento 1:1 de um campo de domínio pra um campo na persistência. Essa separação só nos causa mais dor na hora de implementar algo novo e definitivamente quebra o nosso princípio KISS e YAGNI. Se eu fosse começar um projeto novo, provavelmente eu começaria com o domínio mapeado com o framework de ORM. Se as coisas começarem a divergir então eu faria uma task para separá-los. 
+Ainda nessa camada a maior polêmica é, devo anotar nossas entidades com anotações de persistência ORM (*object-relational mapping*)? Na maioria dos projetos que eu entrei entidades de persistência e entidades de domínio são mantidas separadamente e sempre temos que converter de uma pra outra. Porém, olhando pra trás eu me pergunto se essa separação é realmente necessária. Novamente, nessa mesma maioria dos projetos, sempre houve um mapeamento 1:1 de um campo de domínio pra um campo na persistência. Essa separação só nos causa mais dor na hora de implementar algo novo e definitivamente quebra o nosso princípio KISS e YAGNI. Se eu fosse começar um projeto novo, provavelmente eu começaria com o domínio mapeado com o framework de ORM. Se as coisas começarem a divergir então eu faria uma task para separá-los. 
 
 ### Dependências externas
 
@@ -82,7 +82,7 @@ Para ilustrar a "arquitetura" que eu mencionei acima, vamos imaginar como seria 
 
 > Disclaimer: Qualquer semelhança com a realidade é mera coincidência. 🤭
 
-Imagine que nós temos que implementar o caso de uso: *CreateReview*. Depois de esboçamos o *system design* e discutimos com o time nós chegamos ao seguinte fluxo:
+Imagine que nós temos que implementar o caso de uso: *CreateReview*. Depois que esboçamos o *system design* e discutimos com o time nós chegamos ao seguinte fluxo:
 
 ![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/xn2odrjhvh7l9ddupo7c.png)
 
@@ -101,7 +101,7 @@ Agora na hora da implementação nós imaginamos as seguintes classes/camadas:
 
 Nós temos 2 controllers:
 1. *CreateReview* que implementa nossa API. Esse controller recebe a requisição, faz todas as validações de entrada necessárias e transforma o *RequestDTO* em *CreateReviewDTO* que é enviado para a nossa classe de caso de uso. Essa transformação é opcional e nem todo projeto faz isso, o porquê eu fiz isso aqui? Pra manter consistência com o *UpdateReview* controller/caso de uso. Mais detalhes no passo 8.
-2. *UpdateReview* controller que implementa uma outra API. Eu coloquei essa API aqui pra dar uma visão pra um caso de uso que é utilizado por duas entradas diferentes. Mais detalhes no passo 8 abaixo.
+2. *UpdateReview* controller que implementa uma outra API. Eu coloquei essa API aqui pra dar uma visão pra um caso de uso que é utilizado por duas entradas diferentes. Mais detalhes na seção de *Adapters/Integração* abaixo.
 
 ### Casos de Uso/Entidades
 
@@ -119,7 +119,7 @@ Esses dois componentes não são da camada de persistência, mas eu vou deixar a
 
 ### Adapters/Integração
 
-7. Depois de moderada, a nossa *review* é aprovada ou rejeitada. Um pequeno *Worker* implementado por uma classe chamada *ModerationListener* fica ouvindo por mensagens enviadas pelo sistema de moderação. O *ModerationListener* recebe a mensagem e transforma em um *UpdateReviewDTO* necessário para chamar a nossa classe de *UpdateReviewUseCase*. 
+7. Depois de moderada, a nossa *review* é aprovada ou rejeitada. Um pequeno *Worker* implementado por uma classe chamada *ModeracaoListener* fica ouvindo por mensagens enviadas pelo sistema de moderação. O *ModeracaoListener* recebe a mensagem e transforma em um *UpdateReviewDTO* necessário para chamar a nossa classe de *UpdateReviewUseCase*. 
 
 Percebeu agora porque eu decidi criar um DTO de entrada por caso de uso? Como meu requisito contém múltiplas entradas no meu sistema eu não quis fazer o *Listener* depender de uma classe da camada de APIs (o *RequestDTO*).
 
@@ -139,7 +139,7 @@ Já em termos de trade-offs, notem o seguinte:
    2. Manter a entidade de domínio como está e copiar o código para o novo DTO.
    3. Atualizar as classes de persistência para usar o novo DTO.
 2. Eu adicionei uma complexidade extra com a adição de DTOs por caso de uso. As vezes, isso nem é necessário e você pode simplesmente passar o DTO do controller direto.
-3. O nosso listener chama o caso de uso mas muitas vezes, nós queremos que todas as chamadas, mesmo quando feitas dentro do mesmo sistema passem pela API. Nesse caso, o nosso *ModerationListener* invocaria a API não tendo visibilidade ao caso de uso ou banco de dados. Isso protege os dados e nos dá mais segurança forçando todo mundo a passar pela API. 
+3. O nosso listener chama o caso de uso mas muitas vezes, nós queremos que todas as chamadas, mesmo quando feitas dentro do mesmo sistema passem pela API. Nesse caso, o nosso *ModeracaoListener* invocaria a API não tendo visibilidade ao caso de uso ou banco de dados. Isso protege os dados e nos dá mais segurança forçando todo mundo a passar pela API. 
 
 ## As complexidades estão nas "bordas"
 
