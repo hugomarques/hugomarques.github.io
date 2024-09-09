@@ -18,6 +18,9 @@
 # You can create any custom variable you would like, and they will be accessible
 # in the templates via {{ site.myvariable }}.
 
+remote_theme           : "mmistakes/minimal-mistakes"
+minimal_mistakes_skin: "dark" # "default", "air", "aqua", "contrast", "dark", "dirt", "neon", "mint", "plum", "sunrise"
+
 title: Hugo Marques
 description: >- # this means to ignore newlines until "baseurl:"
   Senior Software Engineer @Netflix. Previously @awscloud and @Twitter.
@@ -27,8 +30,6 @@ baseurl: "" # the subpath of your site, e.g. /blog
 url: "https://hugomarques.dev"
 
 # Build settings
-theme: minimal-mistakes-jekyll
-minimal_mistakes_skin: "dark" # "default", "air", "aqua", "contrast", "dark", "dirt", "neon", "mint", "plum", "sunrise"
 
 defaults:
   # _posts
@@ -59,6 +60,8 @@ author:
     icon: "fab fa-fw fa-github"
     url: "https://github.com/hugomarques"
 
+plugins:
+  - jekyll-include-cache
 
 # Exclude from processing.
 # The following items will not be processed, by default.
