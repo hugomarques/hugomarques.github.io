@@ -1,8 +1,8 @@
 ---
-title: AWS de dev pra dev: Credentials e acesso programático - parte 1
+title: "AWS de dev pra dev: Credentials e acesso programático - parte 1"
 published: true
-description: Aprendar a usar credenciais na sua máquina e interagir com o AWS usando a AWS CLI.
-tags: cli, aws, devops
+description: "Aprendar a usar credenciais na sua máquina e interagir com o AWS usando a AWS CLI."
+tags: [cli, aws, devops]
 ---
 
 Inicialmente, a idéia desse post era abordar conceitos sobre AWS IAM mas eu acabei desistindo porque essa informação tem na documentação. Além disso, o AWS IAM é tão vasto que o post ia ser infinito.
