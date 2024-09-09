@@ -25,14 +25,40 @@ description: >- # this means to ignore newlines until "baseurl:"
   Opinions are my own.
 baseurl: "" # the subpath of your site, e.g. /blog
 url: "https://hugomarques.dev"
-twitter_username: hugaomarques
-github_username:  hugomarques
 
 # Build settings
-theme: minima
-plugins:
-  - jekyll-feed
-  - jekyll-gist
+theme: minimal-mistakes-jekyll
+minimal_mistakes_skin: "dark" # "default", "air", "aqua", "contrast", "dark", "dirt", "neon", "mint", "plum", "sunrise"
+
+defaults:
+  # _posts
+  - scope:
+      path: ""
+      type: posts
+    values:
+      layout: single
+      author_profile: true
+      read_time: true
+      comments: true
+      share: true
+      related: true
+
+author:
+  name     : "Your Name"
+  avatar   : "/assets/images/bio-photo.jpg"
+  bio      : >- 
+    Senior Software Engineer @Netflix. Previously @awscloud and @Twitter.
+    I write about my dev journal.
+    Opinions are my own.
+  location : "Somewhere, USA"
+  links:
+  - label: "Twitter"
+    icon: "fab fa-fw fa-twitter-square"
+    url: "https://twitter.com/hugaomarques"
+  - label: "GitHub"
+    icon: "fab fa-fw fa-github"
+    url: "https://github.com/hugomarques"
+
 
 # Exclude from processing.
 # The following items will not be processed, by default.
