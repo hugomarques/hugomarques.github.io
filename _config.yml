@@ -29,6 +29,37 @@ description: >- # this means to ignore newlines until "baseurl:"
 baseurl: "" # the subpath of your site, e.g. /blog
 url: "https://hugomarques.dev"
 
+# Site Author
+author:
+  name             : "Hugo Marques"
+  avatar           : "/assets/bio_400x400.jpg"
+  bio              : >- 
+    Senior Software Engineer @Netflix. Previously @awscloud and @Twitter.
+    I write about my dev journal.
+    Opinions are my own.
+  location         : "Houston - TX"
+  email            :
+  links:
+    # - label: "Email"
+    #   icon: "fas fa-fw fa-envelope-square"
+      # url: "mailto:your.name@email.com"
+    # - label: "Website"
+    #   icon: "fas fa-fw fa-link"
+      # url: "https://your-website.com"
+    - label: "Twitter"
+      icon: "fab fa-fw fa-twitter-square"
+      url: "https://twitter.com/hugaomarques"
+    - label: "GitHub"
+      icon: "fab fa-fw fa-github"
+      url: "https://github.com/hugomarques"
+    # - label: "Instagram"
+    #   icon: "fab fa-fw fa-instagram"
+      # url: "https://instagram.com/"
+    
+
+plugins:
+  - jekyll-include-cache
+
 # Build settings
 
 defaults:
@@ -43,25 +74,6 @@ defaults:
       comments: true
       share: true
       related: true
-
-author:
-  name     : "Your Name"
-  avatar   : "/assets/images/bio-photo.jpg"
-  bio      : >- 
-    Senior Software Engineer @Netflix. Previously @awscloud and @Twitter.
-    I write about my dev journal.
-    Opinions are my own.
-  location : "Somewhere, USA"
-  links:
-  - label: "Twitter"
-    icon: "fab fa-fw fa-twitter-square"
-    url: "https://twitter.com/hugaomarques"
-  - label: "GitHub"
-    icon: "fab fa-fw fa-github"
-    url: "https://github.com/hugomarques"
-
-plugins:
-  - jekyll-include-cache
 
 # Exclude from processing.
 # The following items will not be processed, by default.
