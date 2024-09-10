@@ -1,5 +1,4 @@
 ---
-layout: post
 title: 10 years as a professional developer.
 published: true
 description: A 10 years reflection on my software engineer career.

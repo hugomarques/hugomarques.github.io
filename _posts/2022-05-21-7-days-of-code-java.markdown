@@ -1,5 +1,4 @@
 ---
-layout: post
 title: 7 Days of Code - Java
 published: true
 description:

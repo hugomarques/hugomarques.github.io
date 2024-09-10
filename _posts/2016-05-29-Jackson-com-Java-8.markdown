@@ -1,5 +1,4 @@
 ---
-layout: post
 title:  "Java 8 dates com Jackson JSON"
 date:   2016-05-30
 categories: java jackson

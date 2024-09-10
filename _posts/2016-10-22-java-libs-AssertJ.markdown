@@ -1,5 +1,4 @@
 ---
-layout: post
 title:  "Useful Java libs: AssertJ"
 date: 2016-10-22
 categories: java lib

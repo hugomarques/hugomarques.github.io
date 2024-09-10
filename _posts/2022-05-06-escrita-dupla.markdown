@@ -1,5 +1,4 @@
 ---
-layout: post
 title: O problema da "escrita-dupla"
 published: true
 description: O problema da escrita-dupla em um sistema real

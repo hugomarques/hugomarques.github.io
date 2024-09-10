@@ -1,5 +1,4 @@
 ---
-layout: post
 title: Sistemas distribuídos são estranhos
 published: true
 description: O que são sistemas distribuídos e por que eles são complexos?

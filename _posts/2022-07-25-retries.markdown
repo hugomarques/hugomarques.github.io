@@ -1,5 +1,4 @@
 ---
-layout: post
 title: Retries e lidando com erros transientes 101
 published: true
 description: Lidando com erros transientes através de retries.

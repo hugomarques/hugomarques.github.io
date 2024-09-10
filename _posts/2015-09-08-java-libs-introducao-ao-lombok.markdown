@@ -1,5 +1,4 @@
 ---
-layout: post
 title:  "Java Libs: Introdução ao Lombok"
 date: 2015-09-08 00:00:00
 categories: java lib
