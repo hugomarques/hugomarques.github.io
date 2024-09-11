@@ -101,15 +101,16 @@ Outro ponto interessante é que ele trata de alguns temas que podem ser úteis e
 Em português, o Will e o Gustavo tem feito um trabalho excepcional abordando várias temas no canal deles do Twitch. Recomendo acompanhar as lives deles não só pelo conteúdo, mas também pela resenha que é sensacional 😂.
 
 <iframe
-  src=" https://www.twitch.tv/williandev"
+  src="https://player.twitch.tv/?channel=williandev&parent=hugodesmarques.dev"
   height="480"
   width="720"
   allowfullscreen="true">
 </iframe>
 
+
 Existem centenas de canais de youtube abordando o assunto. Eu deixo aqui o meu favorito que é o **Neetcode**. A jornada do cara do Neetcode é bem interessante e vale a pena você dar uma olhada. As explicações dele, infelizmente, são em inglês, mas se isso não é uma barreira, eu recomendo.
 
-<iframe width="560" height="315" src=" https://www.youtube.com/c/neetcode" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/QHXET1G9Y5U?si=GCb7a1tq9huNKN86" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
 ### Cursos
 
