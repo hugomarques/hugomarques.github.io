@@ -1,5 +1,5 @@
 ---
-title: 'Testando das trincheiras: Usando um "clock" fixo'
+title: 'Testes - Testando das trincheiras: Usando um "clock" fixo'
 published: true
 description: Vamos aprender como usar um relógio fixo para tornar nossas classes mais testáveis.
 tags: #java #testes #oop #patterns
