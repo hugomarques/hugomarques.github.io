@@ -1,9 +1,7 @@
 ---
 title:  "Java 8 dates com Jackson JSON"
-date:   2016-05-30
-categories: java jackson
-tags: json java jackson java8
-comments: true
+published: true
+tags: java lib
 ---
 
 Recentemente, descobri que Jackson não suportava os tipos disponíveis no pacote *java.time* do *Java 8*. Esse post demonstra o problema e como solucioná-lo.

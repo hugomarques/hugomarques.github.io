@@ -1,8 +1,7 @@
 ---
 title:  "Java Libs: Introdução ao Lombok"
-date: 2015-09-08 00:00:00
-categories: java lib
-comments: true
+published: true
+tags: java lib
 ---
 Java sempre foi conhecida como uma linguagem lenta e verborrágica. Apesar de muitas dessas afirmações serem devido ao estigma herdado das primeiras versões da JVM, outras ainda são verdadeiras. Para usuários de outras linguagens como Python ou Ruby, é fato que em Java, tal como em português, muitas vezes se escreve muito para se falar pouco.
 

@@ -1,9 +1,7 @@
 ---
 title:  "Useful Java libs: AssertJ"
-date: 2016-10-22
-categories: java lib
-tags: java tdd assertj
-comments: true
+published: true
+tags: java lib
 ---
 
 This article will be a short one. Today I was trying to write a test case which I had to compare 2 maps, one expected map against an output map.
